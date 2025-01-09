@@ -4,4 +4,13 @@ spring:
   r2dbc:
     url: r2dbc:postgresql://localhost:5432/postgres
     username: postgres
-    password: admin
+    password: 50LT3ruvQ7D8xSFY6noR
+
+
+  jpa:
+    hibernate:
+     ddl-auto: none
+
+logging:
+  level:
+    org.springframework.r2dbc: DEBUG

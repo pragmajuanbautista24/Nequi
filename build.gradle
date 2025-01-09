@@ -21,15 +21,25 @@ configurations {
 
 repositories {
 	mavenCentral()
+	maven { url 'https://repo.spring.io/milestone' }
 }
 
 dependencies {
+	// Spring WebFlux y R2DBC
 	implementation 'org.springframework.boot:spring-boot-starter-data-r2dbc'
 	implementation 'org.springframework.boot:spring-boot-starter-webflux'
+
+	// Apache Commons Lang
+	implementation 'org.apache.commons:commons-lang3:3.4'
+
+	// Soporte para PostgreSQL con R2DBC
+	implementation 'io.r2dbc:r2dbc-postgresql:0.8.13.RELEASE'
+
+	// Lombok
 	compileOnly 'org.projectlombok:lombok'
-	runtimeOnly 'org.postgresql:postgresql'
-	runtimeOnly 'org.postgresql:r2dbc-postgresql'
 	annotationProcessor 'org.projectlombok:lombok'
+
+	// Dependencias para pruebas
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'io.projectreactor:reactor-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'

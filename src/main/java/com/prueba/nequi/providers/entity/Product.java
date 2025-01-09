@@ -1,4 +1,4 @@
-package com.prueba.nequi.entity;
+package com.prueba.nequi.providers.entity;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -8,12 +8,12 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
-@Table("sucursal")
+@Table("producto")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class Branch {
+public class Product {
 
     @Id
     @Column("id")
@@ -22,7 +22,10 @@ public class Branch {
     @Column("nombre")
     private String name;
 
-    @Column("productos")
-    private String[] products;
+    @Column("cantidad")
+    private Integer stock;
+
+    @Column("sucursal_id")
+    private Integer branchId;
 
 }

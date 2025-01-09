@@ -1,19 +1,22 @@
-package com.prueba.nequi.entity;
+package com.prueba.nequi.providers.entity;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Transient;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
-@Table("producto")
+import java.util.List;
+
+@Table("franquicia")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class Product {
+public class Franchise {
 
     @Id
     @Column("id")
@@ -21,8 +24,5 @@ public class Product {
 
     @Column("nombre")
     private String name;
-
-    @Column("cantidad")
-    private String stock;
 
 }
