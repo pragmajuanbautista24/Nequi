@@ -1,9 +1,10 @@
 package com.prueba.nequi.domain.usecase;
 
+import com.prueba.nequi.domain.model.dto.FranchiseDto;
 import com.prueba.nequi.domain.model.response.BasicResponse;
 import com.prueba.nequi.domain.model.response.Header;
 import com.prueba.nequi.providers.adapter.FranchiseRepository;
-import com.prueba.nequi.providers.entity.Franchise;
+import com.prueba.nequi.providers.mapper.FranchiseMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import reactor.core.publisher.Flux;
@@ -16,51 +17,56 @@ public class FranchiseUseCase {
 
     private final FranchiseRepository repository;
 
-    public FranchiseUseCase(FranchiseRepository repository) {
+    private final FranchiseMapper mapper;
+
+    public FranchiseUseCase(FranchiseRepository repository, FranchiseMapper mapper) {
         this.repository = repository;
+        this.mapper = mapper;
     }
 
-    public Flux<Franchise> findAllFranchises() {
-        return repository.findAll();
+    public Flux<FranchiseDto> findAllFranchises() {
+        return repository.findAll()
+                .map(mapper::toDto);
     }
 
-    public Mono<BasicResponse<Franchise>> findByIdFranchise(Integer id) {
+    public Mono<BasicResponse<FranchiseDto>> findByIdFranchise(Integer id) {
         return Mono.just(id)
                 .flatMap(entityId -> repository.findById(entityId)
                         .flatMap(entity -> {
                             log.info("Franquicia existente: {}", entity);
-                            BasicResponse<Franchise> response = new BasicResponse();
+                            BasicResponse<FranchiseDto> response = new BasicResponse();
                             response.setHeader(new Header("200", "Registro encontrado"));
-                            response.setPayload(entity);
+                            response.setPayload(mapper.toDto(entity));
                             return Mono.just(response);
                         })
                         .switchIfEmpty(Mono.defer(() -> {
-                                    BasicResponse<Franchise> response = new BasicResponse();
+                                    BasicResponse<FranchiseDto> response = new BasicResponse();
                                     response.setHeader(new Header("400", "Registro no encontrado"));
                                     return Mono.just(response);
                                 })
                         ));
     }
 
-    public Mono<BasicResponse<Franchise>> saveFranchise(Franchise franchise) {
+    public Mono<BasicResponse<FranchiseDto>> saveFranchise(FranchiseDto franchise) {
         if (!validateFields(franchise)) {
-            BasicResponse<Franchise> response = new BasicResponse();
-            response.setHeader(new Header("400", "Parametros de entrada invalidos"));
+            BasicResponse<FranchiseDto> response = new BasicResponse();
+                response.setHeader(new Header("400", "Parametros de entrada invalidos"));
             return Mono.just(response);
         }
-        return repository.save(franchise)
+
+        return repository.save(mapper.toEntity(franchise))
                 .flatMap(entity -> {
                     log.info("Franquicia creada: {}", entity);
-                    BasicResponse<Franchise> response = new BasicResponse();
+                    BasicResponse<FranchiseDto> response = new BasicResponse();
                     response.setHeader(new Header("200", "Registro creado"));
-                    response.setPayload(entity);
+                    response.setPayload(mapper.toDto(entity));
                     return Mono.just(response);
                 });
     }
 
-    public Mono<BasicResponse<Franchise>> updateFranchise(Integer id, Franchise franquicia) {
+    public Mono<BasicResponse<FranchiseDto>> updateFranchise(Integer id, FranchiseDto franquicia) {
         if (Objects.isNull(id)) {
-            BasicResponse<Franchise> response = new BasicResponse();
+            BasicResponse<FranchiseDto> response = new BasicResponse();
             response.setHeader(new Header("400", "Parametros de entrada invalidos"));
             return Mono.just(response);
         }
@@ -71,21 +77,21 @@ public class FranchiseUseCase {
                     return repository.save(entity)
                             .flatMap(updateEntity -> {
                                 log.info("Franquicia actualizada: {}", updateEntity);
-                                BasicResponse<Franchise> response = new BasicResponse();
+                                BasicResponse<FranchiseDto> response = new BasicResponse();
                                 response.setHeader(new Header("200", "Registro actualizado"));
-                                response.setPayload(updateEntity);
+                                response.setPayload(mapper.toDto(updateEntity));
                                 return Mono.just(response);
                             });
                 })
                 .switchIfEmpty(Mono.defer(() -> {
-                    BasicResponse<Franchise> response = new BasicResponse();
+                    BasicResponse<FranchiseDto> response = new BasicResponse();
                     response.setHeader(new Header("400", "Registro no existe"));
                     return Mono.just(response);
                 }));
     }
 
-    public Mono<BasicResponse<Franchise>> deleteByIdFranchise(Integer id) {
-        BasicResponse<Franchise> response = new BasicResponse<>();
+    public Mono<BasicResponse<FranchiseDto>> deleteByIdFranchise(Integer id) {
+        BasicResponse<FranchiseDto> response = new BasicResponse<>();
         response.setHeader(new Header("400", "Registro no existe"));
 
         return repository.findById(id)
@@ -99,7 +105,7 @@ public class FranchiseUseCase {
                 .defaultIfEmpty(response);
     }
 
-    private boolean validateFields(Franchise franchise) {
+    private boolean validateFields(FranchiseDto franchise) {
         return StringUtils.isNoneBlank(franchise.getName());
     }
 

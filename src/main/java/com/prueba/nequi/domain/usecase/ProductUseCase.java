@@ -1,14 +1,14 @@
 package com.prueba.nequi.domain.usecase;
 
 import com.prueba.nequi.domain.model.dto.ProductBranchDto;
+import com.prueba.nequi.domain.model.dto.ProductDto;
 import com.prueba.nequi.domain.model.response.BasicResponse;
 import com.prueba.nequi.domain.model.response.Header;
 import com.prueba.nequi.providers.adapter.BranchRepository;
 import com.prueba.nequi.providers.adapter.ProductRepository;
-import com.prueba.nequi.providers.entity.Product;
+import com.prueba.nequi.providers.mapper.ProductMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.r2dbc.core.DatabaseClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -21,61 +21,62 @@ public class ProductUseCase {
 
     private final BranchRepository branchRepository;
 
-    private final DatabaseClient databaseClient;
+    private final ProductMapper mapper;
 
-    public ProductUseCase(ProductRepository repository, BranchRepository branchRepository, DatabaseClient databaseClient) {
+    public ProductUseCase(ProductRepository repository, BranchRepository branchRepository, ProductMapper mapper) {
         this.repository = repository;
         this.branchRepository = branchRepository;
-        this.databaseClient = databaseClient;
+        this.mapper = mapper;
     }
 
-    public Flux<Product> findAllProducts() {
-        return repository.findAll();
+    public Flux<ProductDto> findAllProducts() {
+        return repository.findAll()
+                .map(mapper::toDto);
     }
 
-    public Mono<BasicResponse<Product>> findByIdProduct(Integer id) {
+    public Mono<BasicResponse<ProductDto>> findByIdProduct(Integer id) {
         return Mono.just(id)
                 .flatMap(entityId -> repository.findById(entityId)
                         .flatMap(entity -> {
                             log.info("Producto existente: {}", entity);
-                            BasicResponse<Product> response = new BasicResponse();
+                            BasicResponse<ProductDto> response = new BasicResponse();
                             response.setHeader(new Header("200", "Registro encontrado"));
-                            response.setPayload(entity);
+                            response.setPayload(mapper.toDto(entity));
                             return Mono.just(response);
                         })
                         .switchIfEmpty(Mono.defer(() -> {
-                                    BasicResponse<Product> response = new BasicResponse();
+                                    BasicResponse<ProductDto> response = new BasicResponse();
                                     response.setHeader(new Header("400", "Registro no encontrado"));
                                     return Mono.just(response);
                                 })
                         ));
     }
 
-    public Mono<BasicResponse<Product>> saveProduct(Product product) {
+    public Mono<BasicResponse<ProductDto>> saveProduct(ProductDto product) {
         if (!validateFields(product)) {
-            BasicResponse<Product> response = new BasicResponse();
+            BasicResponse<ProductDto> response = new BasicResponse();
             response.setHeader(new Header("400", "Parametros de entrada invalidos"));
             return Mono.just(response);
         }
         return branchRepository.findById(product.getBranchId())
-                .flatMap(branch -> repository.save(product)
+                .flatMap(branch -> repository.save(mapper.toEntity(product))
                         .flatMap(entity -> {
                             log.info("Sucursal creada: {}", entity);
-                            BasicResponse<Product> response = new BasicResponse();
+                            BasicResponse<ProductDto> response = new BasicResponse();
                             response.setHeader(new Header("200", "Registro creado"));
-                            response.setPayload(entity);
+                            response.setPayload(mapper.toDto(entity));
                             return Mono.just(response);
                         }))
                 .switchIfEmpty(Mono.defer(() -> {
-                    BasicResponse<Product> response = new BasicResponse();
+                    BasicResponse<ProductDto> response = new BasicResponse();
                     response.setHeader(new Header("400", "Sucursal invalida para la sucursal"));
                     return Mono.just(response);
                 }));
     }
 
-    public Mono<BasicResponse<Product>> updateProduct(Integer id, Product product) {
+    public Mono<BasicResponse<ProductDto>> updateProduct(Integer id, ProductDto product) {
         if (Objects.isNull(id)) {
-            BasicResponse<Product> response = new BasicResponse();
+            BasicResponse<ProductDto> response = new BasicResponse();
             response.setHeader(new Header("400", "Parametros de entrada invalidos"));
             return Mono.just(response);
         }
@@ -87,21 +88,21 @@ public class ProductUseCase {
                     return repository.save(entity)
                             .flatMap(updateEntity -> {
                                 log.info("Producto actualizada: {}", updateEntity);
-                                BasicResponse<Product> response = new BasicResponse();
+                                BasicResponse<ProductDto> response = new BasicResponse();
                                 response.setHeader(new Header("200", "Registro actualizado"));
-                                response.setPayload(updateEntity);
+                                response.setPayload(mapper.toDto(updateEntity));
                                 return Mono.just(response);
                             });
                 })
                 .switchIfEmpty(Mono.defer(() -> {
-                    BasicResponse<Product> response = new BasicResponse();
+                    BasicResponse<ProductDto> response = new BasicResponse();
                     response.setHeader(new Header("400", "Registro no existe"));
                     return Mono.just(response);
                 }));
     }
 
-    public Mono<BasicResponse<Product>> deleteByIdProduct(Integer id) {
-        BasicResponse<Product> response = new BasicResponse<>();
+    public Mono<BasicResponse<ProductDto>> deleteByIdProduct(Integer id) {
+        BasicResponse<ProductDto> response = new BasicResponse<>();
         response.setHeader(new Header("400", "Registro no existe"));
 
         return repository.findById(id)
@@ -119,7 +120,7 @@ public class ProductUseCase {
         return repository.findTopProductsByFranchise(franchiseName);
     }
 
-    private boolean validateFields(Product product) {
+    private boolean validateFields(ProductDto product) {
         return StringUtils.isNoneBlank(product.getName())
                 && Objects.nonNull(product.getStock())
                 && Objects.nonNull(product.getBranchId());

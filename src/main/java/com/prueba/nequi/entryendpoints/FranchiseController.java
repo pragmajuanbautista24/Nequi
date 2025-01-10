@@ -1,10 +1,13 @@
 package com.prueba.nequi.entryendpoints;
 
+import com.prueba.nequi.domain.model.dto.FranchiseDto;
 import com.prueba.nequi.domain.model.response.BasicResponse;
-import com.prueba.nequi.providers.entity.Franchise;
 import com.prueba.nequi.domain.usecase.FranchiseUseCase;
 import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -19,28 +22,13 @@ public class FranchiseController {
     }
 
     @GetMapping
-    public Flux<Franchise> getAll() {
+    public Flux<FranchiseDto> getAll() {
         return franchiseUseCase.findAllFranchises();
     }
 
     @GetMapping("/{id}")
-    public Mono<BasicResponse<Franchise>> getById(@PathVariable Integer id) {
+    public Mono<BasicResponse<FranchiseDto>> getById(@PathVariable Integer id) {
         return franchiseUseCase.findByIdFranchise(id);
-    }
-
-    @PostMapping
-    public Mono<BasicResponse<Franchise>> create(@RequestBody Franchise franquicia) {
-        return franchiseUseCase.saveFranchise(franquicia);
-    }
-
-    @PutMapping("/{id}")
-    public Mono<BasicResponse<Franchise>> update(@PathVariable Integer id, @RequestBody Franchise franquicia) {
-        return franchiseUseCase.updateFranchise(id, franquicia);
-    }
-
-    @DeleteMapping("/{id}")
-    public Mono<BasicResponse<Franchise>> delete(@PathVariable Integer id) {
-        return franchiseUseCase.deleteByIdFranchise(id);
     }
 
 }
